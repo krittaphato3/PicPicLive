@@ -1,0 +1,102 @@
+/* --- Buttons --- */
+.up-btn {
+  background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--hairline);
+  padding: 12px 25px; border-radius: var(--r-md); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 10px;
+  transition: all var(--dur) var(--ease-out);
+  font-size: 0.95rem; font-weight: 500;
+}
+.up-btn:hover { background: var(--panel); border-color: var(--accent); transform: translateY(-2px); }
+
+button.ctrl-btn {
+  background: transparent; border: none; color: var(--text-dim);
+  font-size: 1.1rem; cursor: pointer;
+  width: 44px; height: 44px; border-radius: var(--r-pill);
+  transition: all var(--dur-fast) var(--ease-out);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+}
+button.ctrl-btn:hover { color: var(--text); background: rgba(255,255,255,0.1); transform: translateY(-3px); }
+button.ctrl-btn.active-btn { color: var(--accent); background: var(--accent-soft); }
+
+/* --- Control bar --- */
+#controls {
+  background: var(--panel); backdrop-filter: blur(var(--blur-panel));
+  padding: 10px 30px; border-radius: var(--r-pill);
+  display: flex; gap: 18px; align-items: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+  border: 1px solid var(--hairline);
+  max-width: 90vw; overflow-x: auto;
+}
+
+/* --- Sliders --- */
+.slider-group { display: flex; flex-direction: column; align-items: center; width: 120px; flex-shrink: 0; margin: 0 5px; }
+.slider-header { display: flex; justify-content: space-between; width: 100%; margin-bottom: 6px; }
+.slider-label { font-size: 0.6rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.slider-val { font-size: 0.6rem; color: var(--accent); font-family: ui-monospace, monospace; }
+input[type=range] {
+  width: 100%; cursor: pointer; accent-color: var(--accent);
+  height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; appearance: none;
+}
+
+/* --- Switch --- */
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background-color: var(--hairline); transition: var(--dur);
+  border-radius: var(--r-pill);
+}
+.slider:before {
+  position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+  background-color: white; transition: var(--dur); border-radius: 50%;
+}
+.switch input:checked + .slider { background-color: var(--accent); }
+.switch input:checked + .slider:before { transform: translateX(18px); }
+
+/* --- Modal --- */
+#modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(var(--blur-overlay));
+  z-index: 1000; display: none; justify-content: center; align-items: center;
+  opacity: 0; transition: opacity var(--dur) var(--ease-out);
+}
+#modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: var(--panel); border: 1px solid var(--hairline);
+  width: 350px; border-radius: var(--r-lg); padding: 30px; text-align: center;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+  transform: scale(0.9); transition: transform var(--dur) var(--ease-spring);
+}
+#modal-overlay.active .modal-box { transform: scale(1); }
+.modal-icon { font-size: 3rem; color: var(--danger); margin-bottom: 20px; }
+.modal-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+.modal-desc { font-size: 0.95rem; color: var(--text-dim); margin-bottom: 30px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 15px; justify-content: center; }
+.modal-btn {
+  border: none; padding: 12px 24px; border-radius: var(--r-md); cursor: pointer;
+  font-weight: 600; font-size: 0.95rem; transition: var(--dur-fast);
+}
+.btn-cancel { background: var(--panel-2); color: var(--text-dim); }
+.btn-cancel:hover { background: var(--hairline); color: var(--text); }
+.btn-confirm { background: var(--danger); color: white; box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+.btn-confirm:hover { background: #dc2626; transform: translateY(-2px); }
+
+/* --- Toast --- */
+#toast {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: rgba(15,15,15,0.92); color: white;
+  padding: 16px 32px; border-radius: var(--r-pill);
+  font-size: 1.1rem; pointer-events: none; opacity: 0;
+  transition: opacity var(--dur); z-index: 1500;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--hairline);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  display: flex; align-items: center; gap: 16px;
+}
+.toast-action {
+  background: var(--accent); color: white; border: none;
+  padding: 6px 14px; border-radius: var(--r-sm);
+  font-weight: 600; cursor: pointer; pointer-events: auto;
+}
+.toast-action:hover { background: #4a7aff; }

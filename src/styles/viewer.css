@@ -1,0 +1,55 @@
+/* --- Viewer --- */
+#ambient-bg {
+  position: absolute; inset: 0; z-index: 0; opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  background-size: cover; background-position: center;
+  filter: blur(60px) brightness(0.4); transform: scale(1.2);
+  pointer-events: none;
+}
+.nav-zone {
+  position: absolute; top: 0; height: 100%; z-index: 150;
+  cursor: pointer; display: none;
+}
+#nav-left { left: 0; width: 20%; background: linear-gradient(to right, rgba(0,0,0,0.1), transparent); opacity: 0; transition: opacity var(--dur) var(--ease-out); }
+#nav-right { right: 0; width: 20%; background: linear-gradient(to left, rgba(0,0,0,0.1), transparent); opacity: 0; transition: opacity var(--dur) var(--ease-out); }
+#nav-center { left: 20%; width: 60%; cursor: default; }
+.nav-zone:hover { opacity: 1; }
+
+#viewer {
+  position: relative; width: 100%; height: 100vh;
+  display: none; justify-content: center; align-items: center;
+  overflow: hidden; cursor: grab;
+}
+#viewer:active { cursor: grabbing; }
+
+.frame-display {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain;
+  transition: filter var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+  transform-origin: center center;
+  z-index: 2;
+}
+#img-back { z-index: 2; }
+#img-front { z-index: 3; }
+
+/* --- UI Layer --- */
+#ui-layer {
+  position: fixed; inset: 0; pointer-events: none; z-index: 200;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+  padding-bottom: 40px;
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+}
+#ui-layer.hidden { opacity: 0; transform: translateY(20px); }
+#ui-layer > * { pointer-events: auto; }
+
+#btn-home {
+  position: fixed; top: 25px; right: 25px; z-index: 301;
+  background: rgba(255,255,255,0.05); color: var(--text-dim);
+  border: 1px solid rgba(255,255,255,0.1);
+  width: 45px; height: 45px; border-radius: var(--r-md); cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+  transition: all var(--dur) var(--ease-out);
+}
+#btn-home:hover { color: var(--text); background: rgba(239,68,68,0.4); border-color: rgba(239,68,68,0.6); transform: scale(1.05); }
