@@ -2,7 +2,7 @@ import type { Store } from '../../core/store';
 import { h } from '../../utils/dom';
 import { coverGrid } from './sidebar';
 
-export function mountLanding(store: Store, app: HTMLElement, actions: { onPickFiles: () => void; onPickFolder: () => void }): void {
+export function mountLanding(store: Store, app: HTMLElement, actions: { onPickFiles: () => void; onPickFolder: () => void }, onDeleteAlbum: (id: string, name: string) => void): void {
   const scanStatus = h('p', { id: 'scan-status', style: { color: 'var(--text-mute)' } }, ['Accessing Local Storage…']);
   const grid = h('div', { id: 'landing-grid' }, [scanStatus]);
   const zone = h('div', { id: 'upload-zone' }, [
@@ -31,8 +31,14 @@ export function mountLanding(store: Store, app: HTMLElement, actions: { onPickFi
     grid.querySelectorAll('.landing-card').forEach(n => n.remove());
     s.albums.forEach((album) => {
       const c = h('div', { class: 'landing-card' });
-      c.innerHTML = coverGrid(album);
+      c.innerHTML = coverGrid(album) + `<button class="album-delete-btn" title="Delete album" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;opacity:0;transition:0.2s;z-index:50;backdrop-filter:blur(4px)"><i class="fas fa-trash-alt"></i></button>`;
       c.onclick = () => store.loadAlbum(album.id);
+      const delBtn = c.querySelector('.album-delete-btn') as HTMLElement;
+      if (delBtn) {
+        delBtn.onclick = (e) => { e.stopPropagation(); onDeleteAlbum(album.id, album.name); };
+        c.addEventListener('mouseenter', () => { delBtn.style.opacity = '1'; });
+        c.addEventListener('mouseleave', () => { delBtn.style.opacity = '0'; });
+      }
       grid.append(c);
     });
     zone.style.display = s.currentAlbumId ? 'none' : 'flex';

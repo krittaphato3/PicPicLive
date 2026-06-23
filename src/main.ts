@@ -5,12 +5,13 @@ import './styles/viewer.css';
 import './styles/chrome.css';
 import './styles/landings.css';
 
-import { createStore } from './core/store';
+import { createStore, DEFAULT_SETTINGS } from './core/store';
 import { uid } from './core/ids';
-import { getAll, groupItems } from './services/db';
+import { getAll, groupItems, deleteByGroup } from './services/db';
 import { handleFiles } from './services/import';
 import { mountToast, showToast } from './services/toast';
 import { installKeyboard, registerKey } from './services/keyboard';
+import { loadSettings, saveSettings } from './services/settings-store';
 import { mountSidebar } from './features/library/sidebar';
 import { mountLanding } from './features/library/landing';
 import { mountViewer } from './features/viewer';
@@ -21,12 +22,23 @@ import { mountSettingsPanel } from './features/settings-panel';
 import { mountModal, isModalOpen } from './features/modals/confirm';
 import { mountPip } from './features/pip/renderer';
 import { startPlayer, stopPlayer, renderCurrent } from './features/player/loop';
+import { showConfirm } from './features/modals/confirm';
 import type { Album, Frame } from './core/types';
 
 async function boot(): Promise<void> {
   const app = document.getElementById('app')!;
   app.innerHTML = '';
-  const store = createStore();
+  
+  // Load persisted settings
+  const savedSettings = loadSettings();
+  const store = createStore({ settings: { ...DEFAULT_SETTINGS, ...savedSettings } });
+  
+  // Persist settings changes
+  store.subscribe(s => saveSettings(s.settings));
+  
+  // Apply theme
+  document.documentElement.dataset.theme = store.getState().settings.theme;
+
   mountToast(app);
   installKeyboard();
   mountModal(app);
@@ -35,8 +47,8 @@ async function boot(): Promise<void> {
   const folderInput = makeInput('folder-input', { webkitdirectory: '', directory: '', multiple: '' });
   app.append(fileInput, folderInput);
 
-  mountSidebar(store, app, () => folderInput.click());
-  mountLanding(store, app, { onPickFiles: () => fileInput.click(), onPickFolder: () => folderInput.click() });
+mountSidebar(store, app, () => folderInput.click(), (id, name) => onDeleteAlbum(store, id, name, goHome));
+mountLanding(store, app, { onPickFiles: () => fileInput.click(), onPickFolder: () => folderInput.click() }, (id, name) => onDeleteAlbum(store, id, name, goHome));
   const viewerEls = mountViewer(store, app);
   const grid = mountGrid(store, app);
   mountFilmstrip(store, viewerEls.uiLayer);
@@ -52,11 +64,33 @@ async function boot(): Promise<void> {
     pip,
   });
 
+  // Nav zone click handlers
+  viewerEls.navLeft.addEventListener('click', () => {
+    const s = store.getState();
+    if (s.frames.length) store.setIndex((s.currentIndex - 1 + s.frames.length) % s.frames.length);
+  });
+  viewerEls.navRight.addEventListener('click', () => {
+    const s = store.getState();
+    if (s.frames.length) store.setIndex((s.currentIndex + 1) % s.frames.length);
+  });
+  // Click nav-center toggles UI
+  viewerEls.navCenter.addEventListener('click', () => {
+    const { uiLayer, homeBtn, navZones } = viewerEls;
+    if (uiLayer.classList.contains('hidden')) {
+      uiLayer.classList.remove('hidden');
+      homeBtn.style.display = 'flex';
+      navZones.forEach(z => z.style.display = 'block');
+    } else {
+      uiLayer.classList.add('hidden');
+      homeBtn.style.display = 'none';
+      navZones.forEach(z => z.style.display = 'none');
+    }
+  });
+
   // Show viewer when album loaded; hide landing
   store.subscribe(s => {
     viewerEls.root.style.display = s.currentAlbumId ? 'flex' : 'none';
     if (s.currentAlbumId && !s.isPlaying && s.frames.length) {
-      // autoplay on album open
       store.setPlaying(true);
       renderCurrent(store, { front: viewerEls.imgFront, back: viewerEls.imgBack }, true);
       startPlayer(store, { front: viewerEls.imgFront, back: viewerEls.imgBack });
@@ -92,6 +126,8 @@ async function boot(): Promise<void> {
     else if (store.getState().currentAlbumId) goHome();
   });
   registerKey('f', () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); });
+  registerKey('mod+k', () => { /* command palette - Phase 6 */ }, { allowWhileTyping: true });
+  registerKey('?', () => showShortcuts());
 
   // Load existing library
   try {
@@ -162,6 +198,34 @@ function makeInput(id: string, attrs: Record<string, string>): HTMLInputElement 
   el.style.display = 'none';
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   return el;
+}
+
+function onDeleteAlbum(store: ReturnType<typeof createStore>, albumId: string, albumName: string, goHomeFn: () => void): void {
+  showConfirm('Delete Album?', `Delete "${albumName}"?`, async () => {
+    await deleteByGroup(albumName);
+    const albums = store.getState().albums.filter((a: Album) => a.id !== albumId);
+    store.setAlbums(albums);
+    if (store.getState().currentAlbumId === albumId) {
+      goHomeFn();
+    }
+    showToast(`Album "${albumName}" deleted`);
+  });
+}
+
+function showShortcuts(): void {
+  const shortcuts = [
+    ['← / →', 'Previous / Next'],
+    ['Space', 'Play / Pause'],
+    ['Esc', 'Close / Back'],
+    ['F', 'Fullscreen'],
+    ['?', 'Show this help'],
+    ['Ctrl/Cmd+K', 'Command palette (soon)'],
+    ['Double-click center', 'Reset zoom'],
+    ['Wheel', 'Zoom in/out'],
+    ['Drag center', 'Pan image'],
+  ];
+  const lines = shortcuts.map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:4px 0"><kbd style="background:#333;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.85rem">${k}</kbd><span>${v}</span></div>`).join('');
+  showConfirm('Keyboard Shortcuts', lines, () => {});
 }
 
 void boot();

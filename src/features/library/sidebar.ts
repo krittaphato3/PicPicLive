@@ -23,7 +23,7 @@ export function coverGrid(album: Album): string {
   return `<div class="album-grid ${layout}">${html}</div><div class="album-info"><div class="album-name">${escapeHtml(album.name)}</div><div class="album-meta"><span>${count} items</span></div></div>`;
 }
 
-export function mountSidebar(store: Store, app: HTMLElement, onImportFolder: () => void): void {
+export function mountSidebar(store: Store, app: HTMLElement, onImportFolder: () => void, onDeleteAlbum: (id: string, name: string) => void): void {
   const list = h('div', { id: 'preset-list' });
   const search = h('input', { type: 'text', id: 'preset-search', placeholder: 'Search albums…' });
   const bar = h('div', { id: 'preset-bar' }, [
@@ -57,8 +57,14 @@ export function mountSidebar(store: Store, app: HTMLElement, onImportFolder: () 
     albums.forEach((album) => {
       if (filter && !album.name.toLowerCase().includes(filter)) return;
       const c = h('div', { class: 'album-card' + (currentAlbumId === album.id ? ' active' : '') });
-      c.innerHTML = coverGrid(album);
+      c.innerHTML = coverGrid(album) + `<button class="album-delete-btn" title="Delete album" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:0.2s;z-index:50;backdrop-filter:blur(4px)"><i class="fas fa-trash-alt"></i></button>`;
       c.onclick = () => store.loadAlbum(album.id);
+      const delBtn = c.querySelector('.album-delete-btn') as HTMLElement;
+      if (delBtn) {
+        delBtn.onclick = (e) => { e.stopPropagation(); onDeleteAlbum(album.id, album.name); };
+        c.addEventListener('mouseenter', () => { delBtn.style.opacity = '1'; });
+        c.addEventListener('mouseleave', () => { delBtn.style.opacity = '0'; });
+      }
       list.append(c);
     });
   }
